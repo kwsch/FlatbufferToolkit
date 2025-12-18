@@ -21,18 +21,64 @@ namespace FlatbufferToolkit
             Progress.Initialize(ref progressBar1, ref progressLbl);
         }
 
-        private void ClearForm()
+        private void CreateTemplateSchema(string defaultName)
         {
-            if (hexView.ByteProvider is IDisposable d)
-            {
-                d.Dispose();
-            }
-            hexView.ByteProvider = null;
-            treeView.Nodes.Clear();
-            schemaText.Text = string.Empty;
-            outTxt.Text = string.Empty;
+            const string defaultSchema =
+                "table {0}\n" +
+                "{{\n" +
+                "\n" +
+                "}}\n" +
+                "root_type {0};";
+            schemaText.Text = string.Format(defaultSchema, defaultName);
         }
 
+        private async void ParseSchema()
+        {
+            UIEnabled(false);
+
+            treeView.Nodes.Clear();
+            outTxt.Text = string.Empty;
+            hexView.HighlightedRegions.Clear();
+
+            var parser = new SchemaParser();
+            var schema = await Task.Run(() =>
+            {
+                return parser.Parse(schemaText);
+            });
+
+            if (schema == null) goto end;
+
+            Trace.WriteLine($"Parsed schema with {schema.Structs.Count} tables/structs");
+            Trace.WriteLine($"Root type: {schema.RootType}");
+
+            foreach (var structDef in schema.Structs.Values)
+            {
+                Trace.WriteLine($"\n{(structDef.IsStruct ? "Struct" : "Table")}: {structDef.Name}");
+                foreach (var field in structDef.Fields)
+                {
+                    Trace.WriteLine($"  - {field.Name}: {field.Type.BaseType}");
+                }
+            }
+
+            var binread = new FlatBufferBinWalk(ref hexView, ref treeView, fileBytes, schema);
+            var fbs = await Task.Run(() =>
+            {
+                return binread.ReadRoot();
+            });
+
+            if (fbs == null) goto end;
+
+            foreach (var root in fbs)
+            {
+                Trace.WriteLine(root.ToString());
+            }
+            hexView.Invalidate(true);
+
+            end:
+            UIEnabled(true);
+        }
+
+        #region UI_INIT
         private void InitDataInspector()
         {
             var AddRow = (string name, object value) =>
@@ -58,6 +104,24 @@ namespace FlatbufferToolkit
             schemaText.InitFbsLexer();
             schemaText.SetupAutoComplete();
             UpdateIDESettings();
+        }
+        #endregion
+
+        #region UI_UPDATE
+        private void UIEnabled(bool b)
+        {
+            runToolStripMenuItem.Enabled = b;
+            hexView.Enabled = b;
+            schemaText.Enabled = b;
+        }
+
+        private void ResetHexView()
+        {
+            if (hexView.ByteProvider is IDisposable d)
+            {
+                d.Dispose();
+            }
+            hexView.ByteProvider = null;
         }
 
         private void UpdateDataInspectorSettings()
@@ -91,52 +155,15 @@ namespace FlatbufferToolkit
             dataInspRowLut["Float"].Cells[1].Value = BitConverter.ToSingle(val);
             dataInspRowLut["Double"].Cells[1].Value = BitConverter.ToDouble(val);
         }
+        #endregion
 
-        private async void ParseSchema()
-        {
-            schemaText.Enabled = false;
-            hexView.Enabled = false;
-
-            var parser = new SchemaParser();
-            var schema = await Task.Run(() =>
-            {
-                return parser.Parse(schemaText);
-            });
-
-            if (schema == null) return;
-
-            Trace.WriteLine($"Parsed schema with {schema.Structs.Count} tables/structs");
-            Trace.WriteLine($"Root type: {schema.RootType}");
-
-            foreach (var structDef in schema.Structs.Values)
-            {
-                Trace.WriteLine($"\n{(structDef.IsStruct ? "Struct" : "Table")}: {structDef.Name}");
-                foreach (var field in structDef.Fields)
-                {
-                    Trace.WriteLine($"  - {field.Name}: {field.Type.BaseType}");
-                }
-            }
-
-            var binread = new FlatBufferBinWalk(ref hexView, ref treeView, fileBytes, schema);
-            var fbs = await Task.Run(() =>
-            {
-                return binread.ReadRoot();
-            });
-
-            if (fbs == null) return;
-
-            foreach (var root in fbs)
-            {
-                Trace.WriteLine(root.ToString());
-            }
-            hexView.Invalidate(true);
-            schemaText.Enabled = true;
-            hexView.Enabled = true;
-        }
-
+        #region FILE_HANDLING
         private void LoadFile(string filepath)
         {
-            ClearForm();
+            ResetHexView();
+            treeView.Nodes.Clear();
+            schemaText.Text = string.Empty;
+            outTxt.Text = string.Empty;
 
             fileBytes = File.ReadAllBytes(filepath);
             hexView.ByteProvider = new FileByteProvider(filepath);
@@ -152,29 +179,14 @@ namespace FlatbufferToolkit
 
             File.WriteAllText(sfd.FileName, schemaText.Text);
         }
+        #endregion
 
-        private void CreateTemplateSchema(string defaultName)
-        {
-            const string defaultSchema =
-                "table {0}\n" +
-                "{{\n" +
-                "\n" +
-                "}}\n" +
-                "root_type {0};";
-            schemaText.Text = string.Format(defaultSchema, defaultName);
-        }
-
-        #region UI
+        #region UI_CALLBACKS
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var ofd = new OpenFileDialog();
             if (ofd.ShowDialog() != DialogResult.OK) return;
             LoadFile(ofd.FileName);
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -196,7 +208,6 @@ namespace FlatbufferToolkit
         {
             UpdateDataInspectorSettings();
         }
-        #endregion
 
         private void showLineNumbersToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -212,5 +223,6 @@ namespace FlatbufferToolkit
         {
             ParseSchema();
         }
+        #endregion
     }
 }
