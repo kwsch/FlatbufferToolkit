@@ -59,6 +59,7 @@ namespace FlatbufferToolkit.UI.IDE
             // Set keywords for autocomplete (optional)
             scintilla.SetKeywords(0, string.Join(" ", Keywords));
             scintilla.SetKeywords(1, string.Join(" ", Types));
+
         }
 
         private static void OnCharAdded(object sender, CharAddedEventArgs e)
@@ -90,5 +91,12 @@ namespace FlatbufferToolkit.UI.IDE
         { 
             scintilla.CharAdded += OnCharAdded;
         }
+
+        public static void ShowLineNumbers(this Scintilla scintilla, bool show)
+        {
+            scintilla.Margins[0].Type = MarginType.Number;
+            scintilla.Margins[0].Width = show ? 25 : 0;
+        }
+
     }
 }

@@ -2,6 +2,7 @@ using Be.Windows.Forms;
 using FlatBuffersParser;
 using FlatbufferToolkit.UI.HexView;
 using FlatbufferToolkit.UI.IDE;
+using ScintillaNET;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.IO;
@@ -51,19 +52,25 @@ namespace FlatbufferHelper
             AddRow("S64", 0);
             AddRow("Float", 0.0);
             AddRow("Double", 0.0);
-            UpdateDataInspectorVisibility();
+            UpdateDataInspectorSettings();
         }
 
         private void InitIDE()
         {
             schemaText.InitFbsLexer();
             schemaText.SetupAutoComplete();
+            UpdateIDESettings();
         }
 
-        private void UpdateDataInspectorVisibility()
+        private void UpdateDataInspectorSettings()
         {
             dataInspectorPanel.Visible = dataInspectorToolStripMenuItem.Checked;
             tableLayoutPanel1.PerformLayout();
+        }
+
+        private void UpdateIDESettings()
+        {
+            schemaText.ShowLineNumbers(showLineNumbersToolStripMenuItem.Checked);
         }
 
         private void UpdateSelectedHex()
@@ -179,8 +186,18 @@ namespace FlatbufferHelper
 
         private void dataInspectorToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            UpdateDataInspectorVisibility();
+            UpdateDataInspectorSettings();
         }
         #endregion
+
+        private void showLineNumbersToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            UpdateIDESettings();
+        }
+
+        private void schemaText_UpdateUI(object sender, UpdateUIEventArgs e)
+        {
+            textLbl.Text = string.Format("Text: Line {0}", schemaText.CurrentLine + 1);
+        }
     }
 }

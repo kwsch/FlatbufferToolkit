@@ -41,6 +41,8 @@ namespace FlatbufferHelper
             saveSchemaAsToolStripMenuItem = new ToolStripMenuItem();
             viewToolStripMenuItem = new ToolStripMenuItem();
             dataInspectorToolStripMenuItem = new ToolStripMenuItem();
+            iDEToolStripMenuItem = new ToolStripMenuItem();
+            showLineNumbersToolStripMenuItem = new ToolStripMenuItem();
             hexView = new HexBox();
             schemaText = new Scintilla();
             treeView = new TreeView();
@@ -56,6 +58,7 @@ namespace FlatbufferHelper
             tableLayoutPanel1 = new TableLayoutPanel();
             dataInspectorPanel = new Panel();
             dataInspectorSettings = new GroupBox();
+            textLbl = new Label();
             menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
@@ -103,7 +106,7 @@ namespace FlatbufferHelper
             // 
             // viewToolStripMenuItem
             // 
-            viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { dataInspectorToolStripMenuItem });
+            viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { dataInspectorToolStripMenuItem, iDEToolStripMenuItem });
             viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             viewToolStripMenuItem.Size = new Size(44, 20);
             viewToolStripMenuItem.Text = "View";
@@ -115,6 +118,23 @@ namespace FlatbufferHelper
             dataInspectorToolStripMenuItem.Size = new Size(150, 22);
             dataInspectorToolStripMenuItem.Text = "Data Inspector";
             dataInspectorToolStripMenuItem.Click += dataInspectorToolStripMenuItem_Click;
+            // 
+            // iDEToolStripMenuItem
+            // 
+            iDEToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { showLineNumbersToolStripMenuItem });
+            iDEToolStripMenuItem.Name = "iDEToolStripMenuItem";
+            iDEToolStripMenuItem.Size = new Size(150, 22);
+            iDEToolStripMenuItem.Text = "IDE";
+            // 
+            // showLineNumbersToolStripMenuItem
+            // 
+            showLineNumbersToolStripMenuItem.Checked = true;
+            showLineNumbersToolStripMenuItem.CheckOnClick = true;
+            showLineNumbersToolStripMenuItem.CheckState = CheckState.Checked;
+            showLineNumbersToolStripMenuItem.Name = "showLineNumbersToolStripMenuItem";
+            showLineNumbersToolStripMenuItem.Size = new Size(180, 22);
+            showLineNumbersToolStripMenuItem.Text = "Show Line Numbers";
+            showLineNumbersToolStripMenuItem.Click += showLineNumbersToolStripMenuItem_Click;
             // 
             // hexView
             // 
@@ -143,6 +163,7 @@ namespace FlatbufferHelper
             schemaText.Name = "schemaText";
             schemaText.Size = new Size(316, 516);
             schemaText.TabIndex = 1;
+            schemaText.UpdateUI += schemaText_UpdateUI;
             // 
             // treeView
             // 
@@ -329,11 +350,22 @@ namespace FlatbufferHelper
             dataInspectorSettings.TabStop = false;
             dataInspectorSettings.Text = "Settings";
             // 
+            // textLbl
+            // 
+            textLbl.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            textLbl.AutoSize = true;
+            textLbl.Location = new Point(235, 653);
+            textLbl.Name = "textLbl";
+            textLbl.Size = new Size(31, 15);
+            textLbl.TabIndex = 9;
+            textLbl.Text = "Text:";
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1258, 677);
+            Controls.Add(textLbl);
             Controls.Add(tableLayoutPanel1);
             Controls.Add(hexLbl);
             Controls.Add(outTxt);
@@ -384,5 +416,8 @@ namespace FlatbufferHelper
         private DataGridViewTextBoxColumn Value;
         private Panel dataInspectorPanel;
         private GroupBox dataInspectorSettings;
+        private ToolStripMenuItem iDEToolStripMenuItem;
+        private ToolStripMenuItem showLineNumbersToolStripMenuItem;
+        private Label textLbl;
     }
 }
